@@ -2,7 +2,7 @@
     <div :style="{ backgroundColor: color }" class="container">
       <img :src="image" alt="" />
       <h3>{{ title }}</h3>
-      <ButtonComponent
+      <ButtonComponent @click="shopnow(title)"
         id="button"
         :buttonColor="buttonColor"
       />
@@ -22,6 +22,11 @@
       color: String,
       buttonColor: String,
     },
+    methods: {
+      shopnow(promotion){
+        alert("Let's shop: "+promotion);
+      }
+    }
   
   };
   </script>
