@@ -27,8 +27,18 @@ import PromotionComponent from "./components/PromotionComponent.vue";
 import ButtonComponent from "./components/ButtonComponent.vue";
 
 import axios from "axios";
+import { useProductStore } from './stores/product';
+import { mapState } from 'pinia';
+
 
 export default {
+  setup() {
+    const store = useProductStore()
+    return {
+      store
+    }
+  },
+
   components: {
     CategoryComponent,
     PromotionComponent,
@@ -38,7 +48,7 @@ export default {
   data() {
     return {
       
-      categories: [
+      // categories: [
       //   {
       //     id: 1,
       //     image: "./src/assets/images/hamburger.svg",
@@ -109,35 +119,34 @@ export default {
       //     productCount: 63,
       //     color: "#fff3ff",
       //   },
-      ],
+      // ],
 
-      promotions: [
-      {
-          id: 1,
-          color: "#f0e8d5",
-          title: "Everyday Fresh & Clean with Our Products",
-          image: "./src/assets/images/onions.svg",
-          buttonColor: "#3bb77e",
-        },
-        {
-          id: 2,
-          color: "#f3e8e8",
-          title: "Make your Breakfast Healthy and Easy",
-          image: "./src/assets/images/bottle.svg",
-          buttonColor: "#3bb77e",
-        },
-        {
-          id: 3,
-          color: "#e7eaf3",
-          title: "The best Organic Products Online",
-          image: "./src/assets/images/allvegetable.svg",
-          buttonColor: "#fdc041",
-        },
-      ],
+      // promotions: [
+      // {
+      //     id: 1,
+      //     color: "#f0e8d5",
+      //     title: "Everyday Fresh & Clean with Our Products",
+      //     image: "./src/assets/images/onions.svg",
+      //     buttonColor: "#3bb77e",
+      //   },
+      //   {
+      //     id: 2,
+      //     color: "#f3e8e8",
+      //     title: "Make your Breakfast Healthy and Easy",
+      //     image: "./src/assets/images/bottle.svg",
+      //     buttonColor: "#3bb77e",
+      //   },
+      //   {
+      //     id: 3,
+      //     color: "#e7eaf3",
+      //     title: "The best Organic Products Online",
+      //     image: "./src/assets/images/allvegetable.svg",
+      //     buttonColor: "#fdc041",
+      //   },
+      // ],
+
+      currentGroupName: "Milks & Diaries"
       
-
-      categories: [],
-      promotions: [],
     };
   },
 
@@ -187,6 +196,40 @@ export default {
     this.fetchCategories();
     this.fetchPromotions();
   },
+
+  computed: {
+    ...mapState(useProductStore, {
+      categories: "categories",
+      promotions: "promotions",
+      products: "products",
+      groups: "groups",
+
+      categories(store) {
+        const cats = store.getCategoriesByGroup(this.currentGroupName)
+        console.log("Categories by group name")
+        console.log(cats)
+        return cats
+      },
+      
+      popularProducts(store) {
+        const products = store.getPopularProducts()
+        console.log("Popular products")
+        console.log(products)
+        return products
+      }
+    }),
+  },
+      
+    
+    
+    
+  
+  async mounted() {
+    await this.store.fetchCategories()
+    await this.store.fetchPromotions()  
+    await this.store.fetchProducts()
+    await this.store.fetchGroups()
+  }, 
 };
 </script>
 
