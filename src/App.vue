@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <div>
     <MenuComponent
       v-for="menu in menus.filter((menu) => menu.id !== 2)"
@@ -55,6 +55,7 @@
       :group="product.group"
     />
   </div>
+  <RouterView></RouterView>
 </template>
 
 <script>
@@ -161,4 +162,7 @@ export default {
   flex-wrap: wrap;
   justify-content: center;
 }
-</style>
+</style> -->
+<template>
+  <RouterView></RouterView>
+</template>
