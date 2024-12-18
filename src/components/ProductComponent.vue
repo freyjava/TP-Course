@@ -1,315 +1,293 @@
 <template>
-    <div class="container">
-      <div
-        v-if="badgeText"
-        class="badge"
-        :style="{ backgroundColor: badgeColor }"
-      >
-        {{ badgeText }}
-      </div>
-      <img
-        class="product-image"
-        :src="images"
-        alt=""
-      />
-      <div class="product-info">
-        <h3 class="brand">Hodo Foods</h3>
-        <p class="product-name">{{ name }}</p>
-        <div class="rating">
-          <span v-for="n in Math.round(rating)" :key="n">
-            <i class="ri-star-fill star-icon"></i>
-          </span>
-          <span class="rating-value">({{ rating }}.00)</span>
-        </div>
-        <p class="weight">{{ size }}</p>
-        <div class="price-container">
-          <div class="price">
-            <span class="current-price">$ {{ price }}</span>
-            <span v-if="promotionAsPercentage > 0" class="old-price"
-              >$ {{ oldPrice.toFixed(2) }}</span
-            >
-          </div>
-          <div class="button-container">
-            <button
-              v-if="!showQuantitySelector"
-              @click="toggleQuantitySelector"
-              class="add-button"
-            >
-              Add +
-            </button>
-            <div v-else class="quantity-selector">
-              <span class="quantity">{{ quantity }}</span>
-              <div class="controls">
-                <button class="increase" @click="increaseQuantity">
-                  <i class="ri-arrow-up-s-line"></i>
-                </button>
-                <button class="decrease" @click="decreaseQuantity">
-                  <i class="ri-arrow-down-s-line"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+  <div class="container">
+    <div v-show="checkPromoStatus" class="promotion-status">
+      <p class="lato-regular">{{ showPromoStatus }}</p>
     </div>
+    <img :src="imgPath" alt="" @click="$emit('img-clicked')">
+    <div class="card-title">
+      <p class="lato-regular gray">Hodo Foods</p>
+        <h4 class="quicksand-regular label">
+          {{ 
+            productName || "Seeds of Change Organic Quinoa, Brown, & Red Rice" 
+          }}
+        </h4>   
+      
+      <div class="rating">
+        <template v-for="n in rating">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20px" viewBox="0 0 24 24" fill="#FDC040"><path d="M12.0006 18.26L4.94715 22.2082L6.52248 14.2799L0.587891 8.7918L8.61493 7.84006L12.0006 0.5L15.3862 7.84006L23.4132 8.7918L17.4787 14.2799L19.054 22.2082L12.0006 18.26Z"></path></svg>
+        </template>
+        <template v-for="n in 5-rating">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20px" viewBox="0 0 24 24" fill="#CDCDCD"><path d="M12.0006 18.26L4.94715 22.2082L6.52248 14.2799L0.587891 8.7918L8.61493 7.84006L12.0006 0.5L15.3862 7.84006L23.4132 8.7918L17.4787 14.2799L19.054 22.2082L12.0006 18.26Z"></path></svg>
+        </template>
+        <p class="lato-regular gray">{{ `(${rating}.0)` }}</p>
+      </div>
+  
+      <p class="lato-regular gray">500 grams</p>
+  
+      <div class="card-price">
+        <div>
+          <template v-if="discountPercent > 0" >
+          <h2 class="quicksand-regular price-color">{{`$${discountedPrice}`}}</h2>
+          <p class="quicksand-regular"><del>{{ `$${price}` }}</del></p>
+          </template>
+          <h2 v-else class="quicksand-regular price-color">{{`$${price}`}}</h2>
+        </div>
+  
+        <div class="add-button">
+          <button @click="btnAddProduct" v-if="!addedClicked" >Add <span>+</span></button>
+  
+          <input v-else type="number" name="" id="" min="0" max="999" value="0"  v-model="amount">
+        </div>
+      </div>
+        
+    </div>
+      
+  </div>
   </template>
   
   <script>
+  import { useProductStore } from '@/stores/Product';
+  import { mapState } from 'pinia';
+  
   export default {
     props: {
-      name: String,
-      rating: Number,
-      size: String,
-      images: String,
-      price: Number,
-      promotionAsPercentage: Number,
-      categoryId: Number,
-      instock: Number,
-      countSold: Number,
-      group: String,
+      productId: Number,
+      promoLabel: {
+        type: String,
+        default: "hello"
+      },
+      productName: {
+        type: String,
+        default: "Bocchi"
+      },
+  
+      price: 0,
+      discountPercent: 0,
+      imgPath: "",
+      rating: 0,
+      countSold: 0,
+      instock: 0,
     },
   
     data() {
-      return {
-        customBadge: "Hot",
-        showQuantitySelector: false,
-        quantity: 1,
-      };
+        return {
+          addedClicked: false,
+          amount: 0,
+          promoColor: "#000000",
+          promoActive: true,
+          promoType: String,
+        }
+    },
+  
+    computed: {    
+      showPromoStatus() {
+        if(this.promoType === 'discount') {
+          this.promoColor = "#3BB77E"
+          return "-%" + this.discountPercent
+        }
+        else if(this.promoType === 'hot') {
+          this.promoColor  = "#FD6E6E"
+          return "Hot"
+        }
+        else if(this.promoType === 'sale') {
+          this.promoColor  = "#F6C851"
+          return "Sale"
+        }
+      },
+  
+      ...mapState(useProductStore, {
+        // store this.amount with its product index
+        countProductAdded: "countProductAdded"
+      }),
+  
+      discountedPrice() {
+        const discounted = this.price * (1 - this.discountPercent / 100) 
+        return discounted.toFixed(2)
+      },
+  
+      checkPromoStatus() {
+        let discount = false
+        let sale = false
+        let hot = false
+  
+        if(this.discountPercent > 0) {
+          this.promoType = "discount"
+          discount = true
+        }
+        
+        if(this.instock > 100) {
+          this.promoType = "sale"
+          sale = true
+        }
+  
+        if(this.countSold > 10) {
+          this.promoType = "hot"
+          hot = true
+        } 
+  
+        if( !(hot || sale || discount)) {
+          return false
+        }
+        
+        return true
+      },
     },
   
     methods: {
-      toggleQuantitySelector() {
-        this.showQuantitySelector = true;
-      },
-  
-      increaseQuantity() {
-        this.quantity++;
-      },
-  
-      decreaseQuantity() {
-        if (this.quantity > 1) {
-          this.quantity--;
-        }
+      btnAddProduct() {
+        this.amount = 1;
+        this.addedClicked = true;
       },
     },
-  
-    computed: {
-      oldPrice() {
-        return this.price / (1 - this.promotionAsPercentage / 100);
-      },
-  
-      parsedImages() {
-        return JSON.parse(this.images);
-      },
-  
-      badgeText() {
-        if (
-          typeof this.promotionAsPercentage === "number" &&
-          this.promotionAsPercentage > 0
-        ) {
-          return `-${this.promotionAsPercentage} %`; // Display discount badge
-        } else if (this.promotionAsPercentage === 0) {
-          return Math.random() > 0.5 ? "Sale" : "Hot"; //Display randomly between Sale and Hot
+    
+    watch: {
+      amount(curr) {
+        if(this.productId) {
+          this.countProductAdded[this.productId] = curr;
         }
-        return null;
-      },
   
-      badgeColor() {
-        if (this.promotionAsPercentage > 0) {
-          return "#3bb77e";
-        } else if (this.promotionAsPercentage === 0) {
-          return this.badgeText === "Sale" ? "#ffa500" : "#fd6e6e";
+        console.log(`${this.productId}: ${this.countProductAdded[this.productId]}`)
+  
+        if(curr === 0) {
+          this.addedClicked = false
         }
-        return "transparent";
       },
-    },
-  };
+    }, 
+  
+  }
   </script>
   
   <style scoped>
-  .container {
-    width: 250px;
-    border: 1px solid #e5e5e5;
-    border-radius: 10px;
-    padding: 10px;
-    margin: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    position: relative;
-  }
+    
+    .card-title {
+      display: flex;
+      flex-direction: column;
+      row-gap: 8px;
+    }
   
-  .badge {
-    position: absolute;
-    top: 20px;
-    left: 0px;
-    background: #3bb77e;
-    width: 60px;
-    height: 30px;
-    border-bottom-right-radius: 15px;
-    border-top-right-radius: 15px;
-    color: #ffffff;
-    font-family: "Lato";
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+    .card-title > * {
+      margin: 0
+    }
   
-  .product-image {
-    width: 75%;
-    height: 35%;
-    margin-top: 40px;
-    margin-bottom: 10px;
-  }
+    .card-title > p {
+      font-size: 12px;
+    }
   
-  .product-info {
-    text-align: left;
-  }
-  
-  .brand {
-    font-size: small;
-    font-family: "Lato";
-    font-weight: 600;
-    color: #7e7e7e7e;
-  }
-  
-  .product-name {
-    font-family: "Quicksand";
-    font-weight: bold;
-    margin: 5px 0;
-  }
-  
-  .rating {
-    display: flex;
-    align-items: center;
-    color: #7e7e7e;
-  }
-  
-  .rating-value {
-    font-family: "Lato";
-    margin-left: 10px;
-  }
-  
-  .rating .star-icon {
-    color: #fdc040;
-  }
-  
-  .weight {
-    color: #7e7e7e;
-    font-family: "Lato";
-  }
-  
-  .price-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .price {
-    width: 35%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin: 10px 0;
-    font-family: "Quicksand";
-  }
-  
-  .current-price {
-    color: #3bb77e;
-    font-weight: bold;
-    font-size: larger;
-  }
-  
-  .old-price {
-    text-decoration: line-through;
-    color: #7e7e7e;
-    font-size: smaller;
-  }
-  
-  .button-container {
-    font-family: "Quicksand";
-  }
-  
-  .add-button {
-    background-color: #def9ec;
-    color: #3bb77e;
-    font-weight: bold;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s ease-in-out, box-shadow 0.3s ease;
-  
-  }
-  
-  .add-button:hover {
-    background-color: #a5e8b3;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  }
-  
-  .add-button:active {
-    background-color: #8fd4a4;
-    transform: translateY(1px);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  }
-  
-  .add-button:focus {
-    outline: none;
-  }
-  
-  .quantity-selector {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 60px;
-    height: 30px;
-    padding: 5px 10px;
-    border: 2px solid #28a745;
-    border-radius: 5px;
-    font-size: 16px;
-    color: #28a745;
-    font-weight: bold;
-    transition: border-color 0.3s, transform 0.2s ease-in-out, box-shadow 0.3s ease;
-  
-    position: relative;
-  }
+    .card-title .label {
+      height: 46px;
+    }
   
   
-  .quantity {
-    text-align: center;
-    width: 25px;  /* Ensure enough space for the quantity number */
-  }
   
-  .controls {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 0px; /* Space between the buttons */
+    .text-brand {
+      color: #7E7E7E;
+    }
   
-    position: absolute;
-  }
+    .container {
+      width: 300px;
+      height: 420px;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #BCE3C9;
+      padding: 20px;
+      box-sizing: border-box;
+      border-radius: 10px;
+      box-shadow: 20px 20px 40px #18181812;
+      position: relative;
+    }
   
-  .controls button {
-    background: none;
-    border: none;
-    color: #28a745;
-    cursor: pointer;
-    font-size: 14px;
-    padding: 5px;
-    transition: color 0.3s, transform 0.2s ease-in-out;
+    img {              
+      width: 200px;
+      height: 140px;
+      align-self: center;
+      padding-bottom: 12px;
+      margin-top: 40px;
+      cursor: pointer;
+    }
   
-    height: 25px;
-  }
+    .rating {
+      display: flex;
+      height: 24px;
+      align-items: center;
+    }
+  
+    .rating > p {
+      font-size: 12px;
+    }
+  
+    .gray {
+      color:#7E7E7E
+    }
+  
+    .card-price {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      height: 36px;
+    }
   
   
-  .controls button:hover {
-    color: #218838;
-    transform: scale(1.2);
-  }
+    .card-price > div {
+      display: flex;
+      align-items: baseline;
+      column-gap: 12px;
+    }
   
-  .controls button:active {
-    color: #1c7430;
-    transform: scale(1);
-  }
+    .card-price h2 {
+      font-size: 24px;
+      color: #3BB77E;
+    }
+  
+    .card-price p {
+      font-size: 12px;
+      color: #7E7E7E;
+    }
+  
+    .add-button > * {
+      width: 70px;
+      font-size: 14px;
+      color: #3BB77E;
+      font-weight: 700;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  
+    .add-button > button {
+      height: 32.5px;
+      background-color: #DEF9EC;
+      border: none;
+      text-align: center;
+    }
+  
+    .add-button > input {
+      height: 30px;
+      background-color: white;
+      border: 1px solid #3BB77E;
+      text-align: center;
+    }
+  
+    .add-button span {
+      font-size: 20px;
+    }
+  
+    .promotion-status {
+      background: v-bind(promoColor);
+      position: absolute;
+      left: 0px;
+      text-align: center;
+      width: 80px;
+      border-radius: 0 30px 30px 0;
+    }
+  
+    .promotion-status > p {
+      color: white;
+      font-size: 12px;
+      font-weight: 400;
+    }
+  
+    
+  
   </style>

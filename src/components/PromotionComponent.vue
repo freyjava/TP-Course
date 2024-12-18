@@ -1,76 +1,74 @@
-<template>
-    <div :style="{ backgroundColor: color }" class="container">
-      <img :src="image" alt="" />
-      <h3>{{ title }}</h3>
-      <ButtonComponent @click="shopnow(title)"
-        id="button"
-        :buttonColor="buttonColor"
-      />
-    </div>
-  </template>
-  
-  <script>
-  import ButtonComponent from "./ButtonComponent.vue";
-  export default {
+<script>
+import ShopButton from './ShopButton.vue';
+
+export default {
     components: {
-      ButtonComponent,
+        ShopButton
     },
-  
     props: {
-      title: String,
-      image: String,
-      color: String,
-      buttonColor: String,
+        imgSrc: String,
+        label: String,
+        bgColor: String,
+        radiusColor: String,
+        buttonColor: String,
     },
     methods: {
-      shopnow(promotion){
-        alert("Let's shop: "+promotion);
-      }
+      shopNow() {
+        alert("Let's shop " + this.label);
+      },
     }
-  
-  };
-  </script>
-  
-  <style scoped>
+}
+</script>
+
+<template>
+  <div class="container">
+    <div class="inner-container">
+      <div class="label quicksand-regular">
+            {{ label }}
+      </div>
+      <div class="button">
+              <ShopButton @click="shopNow" :bgColor="buttonColor"/>
+      </div>
+    </div>
+    <img :src="imgSrc" alt="">
+  </div>
+</template>
+
+<style scoped>
   .container {
-    width: 520px;
-    height: 300px;
-    border-radius: 15px;
-    margin: 10px;
-    position: relative;
+    background-color: v-bind(bgColor);
     display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 512px;
+    height: 300px;
+    border-radius: 10px;
+    border: 1px solid v-bind(radiusColor);
+    margin: 8px;
   }
-  
+
+  .inner-container {
+    width: inherit;
+    height: 160px;
+    display: flex;
+    flex-direction: column;
+    align-content: center;
+    justify-content: space-between;
+    margin-left: 30px;
+  }
+
+  .container .label {
+    font-size: 28px;
+    color: #253D4E;
+  }
+
   .container img {
-    /* width: 75%; */
-    height: 75%;
-    object-fit: contain;
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    flex-shrink: 0; /* Prevents the image from shrinking */
-    max-width: 100%; /* Keeps image responsive */
-    width: auto; /* Maintains aspect ratio */
+    width: 240px;
+    height: 240px;
+    align-self: end;
   }
-  
-  .container h3 {
-    width: 200px;
-    font-family: "Quicksand";
-    font-size: 24px;
-    position: absolute;
-    top: 15%;
-    left: 10%;
-    width: 50%;
+
+  .button {
+    align-self: self-start;
   }
-  
-  #button {
-    position: absolute;
-    bottom: 25%;
-    left: 18%;
-    transform: translateX(-50%);
-  }
-  
-  #button :hover {
-    cursor: pointer;
-  }
-  </style>
+</style>

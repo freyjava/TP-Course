@@ -1,165 +1,180 @@
 <template>
-    <div>
-      <MenuComponent
-        v-for="menu in menus.filter((menu) => menu.id !== 2)"
-        :key="menu.id"
-        :textTitle="menu.textTitle"
-        v-bind="menu"
-        @groupSelected="updateCategoryGroup"
-      />
-    </div>
+  <ShowCase/>
+
+  <MenuComponent 
+  :title="'Featured Products'"
+  :navList="groups"/>
+  <div class="container">
+      <template v-for="(item, index) in categories" :key="index">
+        <CategoryComponent :label="item.name" 
+        :imgSrc="'http://localhost:3000/' + item.image" 
+        :quantity="item.productCount"
+        :bgColor="item.color"
+        @click="goToCategory(item.id)"
+        />
+      </template>
+  </div>
+
+  <br>
   
-    <div class="row-1">
-      <CategoryComponent
-        v-for="category in categories"
-        :key="category.id"
-        :image="category.image"
-        :name="category.name"
-        :productCount="category.productCount"
-        :color="category.color"
+  <div class="container">
+    <template v-for="item in promotions" key="item">
+      <PromotionComponent 
+      :label="item.title" 
+      :bgColor="item.color" 
+      :imgSrc="'http://localhost:3000/' + item.image" 
+      :buttonColor="item.buttonColor"
+      :price="item.price"
       />
-    </div>
-    <div class="row-2">
-      <PromotionComponent
-        v-for="promotion in promotions"
-        :key="promotion.id"
-        :color="promotion.color"
-        :title="promotion.title"
-        :image="promotion.image"
-        :buttonColor="promotion.buttonColor"
-      />
-    </div>
-  
-    <div>
-      <MenuComponent
-        v-if="menus.find((menu) => menu.id === 2)"
-        :key="menus.find((menu) => menu.id === 2).id"
-        :textTitle="menus.find((menu) => menu.id === 2).textTitle"
-        v-bind="menus.find((menu) => menu.id === 2)"
-        @groupSelected="updateProductGroup"
-      />
-    </div>
-    <div class="row-3">
+    </template>
+  </div>
+
+  <br>
+
+  <MenuComponent
+  :title="'Popular Products'"
+  :navList="groups"
+  @change-nav="changeProductGroup"
+  />
+
+  <div class="product-list">
+    <template v-for="item in productsByGroup" key="item">
       <ProductComponent
-        v-for="product in productsByGroup"
-        :key="product.id"
-        :name="product.name"
-        :rating="product.rating"
-        :size="product.size"
-        :images="product.image"
-        :price="product.price"
-        :promotionAsPercentage="product.promotionAsPercentage"
-        :categoryId="product.categoryId"
-        :instock="product.instock"
-        :coundSold="product.countSold"
-        :group="product.group"
+      :productId="item.id"
+      :productName="item.name"
+      :imgPath="'http://localhost:3000/' + parseImages(item.image)[0]" 
+      :rating="item.rating"
+      :discountPercent="item.promotionAsPercentage"
+      :price="item.price"
+      :countSold="item.countSold"
+      :instock="item.instock"
+      @img-clicked="goToProduct(item.id)"
       />
-    </div>
+    </template>
+  </div>
+
+  
+</template>
+
+<script >
+import CategoryComponent from '@/components/CategoryComponent.vue';
+import PromotionComponent from '@/components/PromotionComponent.vue';
+import MenuComponent from '@/components/MenuComponent.vue';
+
+import { useProductStore } from '@/stores/Product';
+import { mapState } from 'pinia';
+import ProductComponent from '@/components/ProductComponent.vue';
+import ShowCase from '@/components/ShowCase.vue';
     
-  </template>
+export default {    
+  setup() {
+    const store = useProductStore();
+    return {
+      store
+    }
+  },
   
-  <script>
-  import CategoryComponent from "@/components/CategoryComponent.vue";
-  import PromotionComponent from "@/components/PromotionComponent.vue";
-  import ButtonComponent from "@/components/ButtonComponent.vue";
-  import MenuComponent from "@/components/MenuComponent.vue";
-  import ProductComponent from "@/components/ProductComponent.vue";
-  import { useProductStore } from "@/stores/Product";
-  import { mapState } from "pinia";
+  components: {
+    CategoryComponent,
+    PromotionComponent,
+    ProductComponent,
+    MenuComponent,
+    ShowCase
+  },
+
+  data() {
+    return {
+      currentGroupName: "",
+      currCategoryGroup: "All",
+      currProductGroup: "All",
+    }
+  },
   
-  export default {
-    setup() {
-      const store = useProductStore();
-      return {
-        store
-      }
+  methods: {
+    getQuantity() {
+      return Math.floor(Math.random() * 100)
     },
-    components: {
-      CategoryComponent,
-      PromotionComponent,
-      ButtonComponent,
-      MenuComponent,
-      ProductComponent,
+
+    changeProductGroup(nav) {
+      this.store.currProductGroup = nav 
+      console.log("Product Group From App.vue")
+      console.log(nav);
     },
-  
-    data() {
-      return {
-        currentProductGroup: null, //For product filtering
-        currentCategoryGroup:null, //For Category filtering
-  
-        menus: [
-          {
-            id: 1,
-            textTitle: "Featured Categories",
-          },
-          {
-            id: 2,
-            textTitle: "Popular Component",
-          },
-        ],
-      };
+
+    goToCategory(id) {
+      this.$router.push(`/categories/${id}`);
     },
-  
-    methods: {
-      updateCategoryGroup(group){
-        this.currentCategoryGroup = group || null;
+
+    goToProduct(id) {
+      this.$router.push(`/products/${id}`);
+    },
+
+    parseImages(image) {
+      return JSON.parse(image);
+    },
+
+  },
+  computed: {
+    ...mapState(useProductStore, {
+      promotions: "promotions",
+      products: "products",
+      groups: "groups",
+      categories: "categories",
+
+      meatProducts(store) { 
+        // results from getter work fine
+        return store.getMeatProducts
       },
+
+      // categories(store) {
+      //   const cats = store.getCategoriesByGroup(this.currentGroupName)
+      //   console.log("Categories by group name")
+      //   console.log(cats)
+      //   return cats
+      // },
+
+      productsByGroup(store) {
+        return store.getProductsByGroup()
+      },
+
+      popularProducts(store) {
+        return store.getPopularProducts
+      },
+
+    }),
+
+  },
+
+
+
+  async mounted() {
+    await this.store.fetchCategories()
+    await this.store.fetchPromotions()  
+    await this.store.fetchProducts()
+    await this.store.fetchGroups()
+  }, 
+
+
+  async mounted() {
+    await this.store.fetchCategories()
+    await this.store.fetchPromotions()  
+    await this.store.fetchProducts()
+    await this.store.fetchGroups()
+  }, 
+}
+</script>
+
+<style scoped>
+.container {
+  display: inline-flex;
+}
+
+.product-list {
+  margin: 10px;
+  display: grid;
+  grid-template-rows: repeat(2, 424px);
+  grid-template-columns: repeat(5, 300px);
+  gap: 18px;
+}
   
-      updateProductGroup(group){
-        this.currentProductGroup = group || null;
-      }
-    },
-  
-    async mounted() {
-      await this.store.fetchCategories()
-      await this.store.fetchPromotions()  
-      await this.store.fetchProducts()
-      await this.store.fetchGroups()
-    }, 
-  
-    
-    computed: {
-      ...mapState(useProductStore, {
-        promotions: "promotions",
-        products: "products",
-        groups: "groups",
-        categories: "categories",
-  
-        meatProducts(store) { 
-          // results from getter work fine
-          return store.getMeatProducts
-        },
-  
-        // categories(store) {
-        //   const cats = store.getCategoriesByGroup(this.currentGroupName)
-        //   console.log("Categories by group name")
-        //   console.log(cats)
-        //   return cats
-        // },
-  
-        productsByGroup(store) {
-          return store.getProductsByGroup()
-        },
-  
-        popularProducts(store) {
-          return store.getPopularProducts
-        },
-  
-      
-      }),
-  
-    },
-  
-  
-  };
-  </script>
-  
-  <style>
-  .row-1,
-  .row-2,
-  .row-3 {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  </style>
+</style>
