@@ -1,37 +1,28 @@
-import Page1View from '@/views/Page1View.vue'
-import Page2View from '@/views/Page2View.vue'
-import Page3View from '@/views/Page3View.vue'
+import App from '@/App.vue'
+import Page from '@/views/Page.vue'
+import Section from '@/views/Section.vue'
 import { createRouter, createWebHistory } from 'vue-router'
-
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    {
-      path: '/',
-      redirect: '/page1'
+  routes: [ 
 
-    },
     {
-      path: "/page1",
-      name: "page1",
-      component: Page1View
+      path: "/",
+      redirect: "/page/1"
     },
+
     {
-      path: "/page2",
-      name: "page2",
-      component: Page2View
-    },
-    {
-      path: "/page3",
-      name: "page3",
-      component: Page3View
-    },
-    {
-      path: "/page-section",
-      name: "page-section",
-    },
-    
+      path: "/page/:pageNumber",
+      component: Page,
+      children: [
+        {
+          path: "section/:id",
+          component: Section,
+        }
+
+      ]
+    }
   ],
 })
 
